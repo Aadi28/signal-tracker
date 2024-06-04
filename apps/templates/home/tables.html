@@ -1,0 +1,87 @@
+{% extends "layouts/base.html" %}
+
+{% block title %} Tables {% endblock %} 
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+  <div class="container-fluid py-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="card my-4">
+          <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
+            <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+              <h6 class="text-capitalize ps-3" style="color: yellow;">Signal Table</h6>
+            </div>
+          </div>
+          <div class="card-body px-0 pb-2">
+            <div class="table-responsive p-0">
+              <table class="table align-items-center mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Signal ID</th>
+                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7 ps-2">Tracking ID</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">From</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">DTG</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Status</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Priority</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Classification</th>
+                    <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Currently With</th>
+                    <th class="text-secondary opacity-7"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for signal in table_data %}
+                  <tr>
+                    <td class="text-center">
+                      <div class="d-flex px-2 py-1">
+                        <div class="d-flex flex-column justify-content-center">
+                          <h6 class="text-muted">{{ signal.id }}</h6>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-center">
+                      <p class="text-muted font-weight-bold mb-0">{{ signal.tracking_id }}</p>
+                    </td>
+                    <td class="align-middle text-center text-sm">{{ signal.from_origin }}
+                    </td>
+                    <td class="align-middle text-center">
+                      <span class="text-secondary text-muted font-weight-bold">{{ signal.dtg }}</span>
+                    </td>
+                    <td class="text-center"><span class="badge badge-sm bg-gradient-success">{{ signal.status }}</span></td>
+                    <td class="align-middle text-center">{{ signal.priority }}</td>
+                    <td class="align-middle text-center">{{signal.classification}}</td>
+                    <td class="align-middle text-center">{{signal.held_with}}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer py-4  ">
+      <div class="container-fluid">
+        <div class="row align-items-center justify-content-lg-between">
+          <div class="col-lg-6 mb-lg-0 mb-4">
+            <div class="copyright text-center text-sm text-muted text-lg-start">
+              © <script>
+                document.write(new Date().getFullYear())
+              </script>,
+              <!-- made with <i class="fa fa-heart"></i> by -->
+              Comnetcen Visakhapatnam
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}
