@@ -91,7 +91,11 @@ class Signal_Tracking(db.Model):
                 # the ,= unpack of a singleton fails PEP8 (travis flake8 test)
                 value = value[0]
 
-            setattr(self, property, value)
+    def __setitem__(self, key, value):
+        setattr(self, key, value)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
 
     def __repr__(self):
         return str(self.tracking_id)

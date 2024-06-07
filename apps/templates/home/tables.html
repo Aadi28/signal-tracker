@@ -6,14 +6,20 @@
 {% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> 
 
   <div class="container-fluid py-4">
     <div class="row">
       <div class="col-12">
         <div class="card my-4">
           <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
-            <div class="bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
-              <h6 class="text-capitalize ps-3" style="color: yellow;">Signal Table</h6>
+            <div class="row bg-gradient-primary shadow-primary border-radius-lg pt-4 pb-3">
+              <div class="col-2">
+                <h6 class="text-uppercase ps-3" style="color: yellow;">Signal Table</h6>
+              </div>
+              <div class="col-10" style="padding-left: 65%;">
+                <p class="text-capitalize text-lg-start" style="color: white;">Welcome, {{ session['user_type'] }}</p>
+              </div>
             </div>
           </div>
           <div class="card-body px-0 pb-2">
@@ -37,8 +43,9 @@
                   <tr>
                     <td class="text-center">
                       <div class="d-flex px-2 py-1">
-                        <div class="d-flex flex-column justify-content-center">
-                          <h6 class="text-muted">{{ signal.id }}</h6>
+                        <div class="d-flex justify-content-center">
+                          <h5 class="text-muted">{{ signal.id }}</h5>
+                          <input style="z-index: -5;" type="text" id="signal_tracking_id" value="{{signal.id}}" class="aria-hidden">
                         </div>
                       </div>
                     </td>
@@ -50,10 +57,41 @@
                     <td class="align-middle text-center">
                       <span class="text-secondary text-muted font-weight-bold">{{ signal.dtg }}</span>
                     </td>
-                    <td class="text-center"><span class="badge badge-sm bg-gradient-success">{{ signal.status }}</span></td>
+                    <td class="text-center">
+                      {% if signal.status in ['APPROVED', 'DISPATCHED', 'DISTRIBUTED'] %}
+                      <span class="badge badge-sm bg-gradient-success">{{ signal.status }}</span>
+                      {% endif %}
+                      {% if signal.status in ['INITIATED'] %}
+                      <span class="badge badge-sm bg-gradient-warning">{{ signal.status }}</span>
+                      {% endif %}
+                      {% if signal.status in ['SENT BACK', 'RETURNED'] %}
+                      <span class="badge badge-sm bg-gradient-danger">{{ signal.status }}</span>
+                      {% endif %}
+                    </td>
                     <td class="align-middle text-center">{{ signal.priority }}</td>
                     <td class="align-middle text-center">{{signal.classification}}</td>
                     <td class="align-middle text-center">{{signal.held_with}}</td>
+                    <td class="align-middle text-center">
+                      {% if session['user_type'] in ['TOS', 'TCS', 'ROUTER', 'HMO', 'CYO'] %}
+                        {% if session['user_type'] in ['TOS', 'ROUTER'] %}
+                        <button type="button" onclick="sendData('TCS')" id="fwd_tcs" class="btn bg-gradient-warning btn-sm">Forward - TCS</button>
+                        {% endif %}
+                        {% if session['user_type'] in ['TCS'] %}
+                        <button type="button" onclick="sendData('HMO')" id="fwd_hmo" class="btn bg-gradient-success btn-sm">Approve - HMO</button>
+                        <button type="button" onclick="sendData('CYO')" id="fwd_cyo" class="btn bg-gradient-warning btn-sm">Forward - CYO</button>
+                        <button type="button" onclick="sendData('ROUTER')" id="fwd_router" class="btn bg-gradient-warning btn-sm">Forward - Router</button>
+                        {% endif %}
+                        {% if session['user_type'] in ['CYO'] %}
+                        <button type="button" onclick="sendData('DISPATCHED')" id="btn_dispatched" class="btn bg-gradient-success btn-sm">Dispatched</button>
+                        {% endif %}
+                        {% if session['user_type'] in ['HMO'] %}
+                        <button type="button" onclick="sendData('DISTRIBUTED')" id="btn_distributed" class="btn bg-gradient-success btn-sm">Distributed</button>
+                        {% endif %}
+                        {% if session['user_type'] in ['TCS'] %}
+                        <button type="button" onclick="sendData('RETURNED')" class="btn bg-gradient-danger btn-sm">Send Back</button>
+                        {% endif %}
+                      {% endif %}
+                    </td>
                   </tr>
                   {% endfor %}
                 </tbody>
@@ -63,7 +101,6 @@
         </div>
       </div>
     </div>
-
     <footer class="footer py-4  ">
       <div class="container-fluid">
         <div class="row align-items-center justify-content-lg-between">
@@ -84,4 +121,36 @@
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
-{% block javascripts %}{% endblock javascripts %}
+{% block javascripts %}
+<script>
+function sendData(send_to) {  
+  var signal_tracking_id = document.getElementById('signal_tracking_id').value;
+  var url = '';
+
+  switch(send_to) {
+    case 'TCS': url = '/forward_tcs'; break;
+    case 'TOS': url = '/forward_tos'; break;
+    case 'ROUTER': url = '/forward_router'; break;
+    case 'CYO': url = '/forward_cyo'; break;
+    case 'HMO': url = '/forward_hmo'; break;
+    case 'DISTRIBUTED': url = '/distributed'; break;
+    case 'RETURNED': url = '/returned'; break;
+    case 'DISPATCHED': url = '/dispatched'; break;
+  }
+
+  console.log(signal_tracking_id);
+  $.ajax({ 
+      url: url, 
+      type: 'POST', 
+      contentType: 'application/json', 
+      data: JSON.stringify({'id': signal_tracking_id}), 
+      success: function(response) { 
+          console.log("Success") 
+      }, 
+      error: function(error) { 
+          console.log(error); 
+      } 
+  }); 
+} 
+</script>
+{% endblock javascripts %}

@@ -1,9 +1,4 @@
-# -*- encoding: utf-8 -*-
-"""
-Copyright (c) 2019 - present AppSeed.us
-"""
-
-from flask import render_template, redirect, request, url_for
+from flask import render_template, redirect, request, url_for, session
 from flask_login import (
     current_user,
     login_user,
@@ -39,12 +34,15 @@ def login():
         
         # Check the password
         if user and verify_pass(password, user.password):
+            session["user_id"] = username
+            session["user_type"] = user.role
             login_user(user)
-            return redirect(url_for('authentication_blueprint.route_default'))
+            # return render_template('home/tables.html', user_Data = user)
+            return redirect(url_for('authentication_blueprint.route_default', user_id = username, user_type = user.type))
 
         # Something (user or pass) is not ok
         return render_template('accounts/login.html',
-                               msg='Wrong user or password',
+                               msg='Wrong username or password',
                                form=login_form)
 
     if not current_user.is_authenticated:
@@ -90,18 +88,23 @@ def register():
 @blueprint.route('/logout')
 def logout():
     logout_user()
+    session.clear()
     return redirect(url_for('authentication_blueprint.login'))
 
 # Errors
 
 @login_manager.unauthorized_handler
 def unauthorized_handler():
-    return render_template('/login')
+    # login_form = LoginForm(request.form)
+    # return render_template('accounts/login.html', msg = "Session expired, pls Login again", form = login_form)
+    return redirect(url_for('authentication_blueprint.login'))
 
 
 @blueprint.errorhandler(403)
 def access_forbidden(error):
-    return render_template('/login')
+    # login_form = LoginForm(request.form)
+    # return render_template('accounts/login.html', form = login_form)
+    return redirect(url_for('authentication_blueprint.login'))
 
 
 @blueprint.errorhandler(404)
