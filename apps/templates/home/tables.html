@@ -42,10 +42,9 @@
                   {% for signal in table_data %}
                   <tr>
                     <td class="text-center">
-                      <div class="d-flex px-2 py-1">
+                      <div class="d-flex py-1" style="padding-left: 2em;">
                         <div class="d-flex justify-content-center">
                           <h5 class="text-muted">{{ signal.id }}</h5>
-                          <input style="z-index: -5;" type="text" id="signal_tracking_id" value="{{signal.id}}" class="aria-hidden">
                         </div>
                       </div>
                     </td>
@@ -74,21 +73,21 @@
                     <td class="align-middle text-center">
                       {% if session['user_type'] in ['TOS', 'TCS', 'ROUTER', 'HMO', 'CYO'] %}
                         {% if session['user_type'] in ['TOS', 'ROUTER'] %}
-                        <button type="button" onclick="sendData('TCS')" id="fwd_tcs" class="btn bg-gradient-warning btn-sm">Forward - TCS</button>
+                        <button type="button" onclick="sendData('TCS', '{{signal.tracking_id}}')" id="fwd_tcs" class="btn bg-gradient-warning btn-sm">Forward - TCS</button>
                         {% endif %}
                         {% if session['user_type'] in ['TCS'] %}
-                        <button type="button" onclick="sendData('HMO')" id="fwd_hmo" class="btn bg-gradient-success btn-sm">Approve - HMO</button>
-                        <button type="button" onclick="sendData('CYO')" id="fwd_cyo" class="btn bg-gradient-warning btn-sm">Forward - CYO</button>
-                        <button type="button" onclick="sendData('ROUTER')" id="fwd_router" class="btn bg-gradient-warning btn-sm">Forward - Router</button>
+                        <button type="button" onclick="sendData('HMO', '{{signal.tracking_id}}')" id="fwd_hmo" class="btn bg-gradient-success btn-sm">Approve - HMO</button>
+                        <button type="button" onclick="sendData('CYO', '{{signal.tracking_id}}')" id="fwd_cyo" class="btn bg-gradient-warning btn-sm">Forward - CYO</button>
+                        <button type="button" onclick="sendData('ROUTER', '{{signal.tracking_id}}')" id="fwd_router" class="btn bg-gradient-warning btn-sm">Forward - Router</button>
                         {% endif %}
-                        {% if session['user_type'] in ['CYO'] %}
-                        <button type="button" onclick="sendData('DISPATCHED')" id="btn_dispatched" class="btn bg-gradient-success btn-sm">Dispatched</button>
+                        {% if session['user_type'] in ['CYO'] and signal.status not in ['DISPATCHED'] %}
+                        <button type="button" onclick="sendData('DISPATCHED', '{{signal.tracking_id}}')" id="btn_dispatched" class="btn bg-gradient-success btn-sm">Dispatched</button>
                         {% endif %}
-                        {% if session['user_type'] in ['HMO'] %}
-                        <button type="button" onclick="sendData('DISTRIBUTED')" id="btn_distributed" class="btn bg-gradient-success btn-sm">Distributed</button>
+                        {% if session['user_type'] in ['HMO'] and signal.status not in ['DISTRIBUTED'] %}
+                        <button type="button" onclick="sendData('DISTRIBUTED', '{{signal.tracking_id}}')" id="btn_distributed" class="btn bg-gradient-success btn-sm">Distributed</button>
                         {% endif %}
-                        {% if session['user_type'] in ['TCS'] %}
-                        <button type="button" onclick="sendData('RETURNED')" class="btn bg-gradient-danger btn-sm">Send Back</button>
+                        {% if session['user_type'] in ['TCS', 'TOS'] %}
+                        <button type="button" onclick="sendData('RETURNED', '{{signal.tracking_id}}')" class="btn bg-gradient-danger btn-sm">Send Back</button>
                         {% endif %}
                       {% endif %}
                     </td>
@@ -123,8 +122,7 @@
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
 <script>
-function sendData(send_to) {  
-  var signal_tracking_id = document.getElementById('signal_tracking_id').value;
+function sendData(send_to, signal_tracking_id) {  
   var url = '';
 
   switch(send_to) {
@@ -138,7 +136,6 @@ function sendData(send_to) {
     case 'DISPATCHED': url = '/dispatched'; break;
   }
 
-  console.log(signal_tracking_id);
   $.ajax({ 
       url: url, 
       type: 'POST', 
@@ -150,7 +147,8 @@ function sendData(send_to) {
       error: function(error) { 
           console.log(error); 
       } 
-  }); 
+  });
+  window.location.reload();
 } 
 </script>
 {% endblock javascripts %}

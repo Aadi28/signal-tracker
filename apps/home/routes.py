@@ -1,11 +1,23 @@
 # -*- encoding: utf-8 -*-
 from apps.home import blueprint
-from flask import render_template, request, session, redirect, url_for
+from flask import render_template, request, session, redirect, url_for, jsonify
 from flask_login import login_required
 from jinja2 import TemplateNotFound
 from apps import db
 from apps.authentication.models import Signal, Signal_Tracking
 from apps.authentication.forms import NewSignalForm
+import pytesseract
+from PIL import Image
+import os
+from werkzeug.utils import secure_filename
+import tempfile
+
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+UPLOAD_PATH = r"C:\Users\Aadi\Desktop\material-dashboard-flask-master\material-dashboard-flask-master\apps\static\uploads"
+
+def allowed_file(filename):
+	return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @blueprint.route('/index')
 @login_required
@@ -16,7 +28,7 @@ def index():
     signal_list = []
     show_action_buttons = True
     
-    if user_type not in ['TOS', 'TCS', 'ROUTER', 'HMO', 'CYO']:
+    if user_type not in ['TOS', 'TCS', 'ROUTER', 'HMO', 'CYO', 'OPERATOR']:
         show_action_buttons = False
 
     if show_action_buttons:
@@ -67,11 +79,42 @@ def enterDetails():
         db.session.add(record)
         db.session.add(tracking)
         db.session.commit()
-        
-        return render_template('home/enterDetails.html', success=True, form = new_signal_form)
+        return redirect('/enterDetails')
     else:
         return render_template('home/enterDetails.html', success=False, form = new_signal_form)
 
+
+@blueprint.route('/upload', methods=['POST'])
+def upload_img():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_PATH, filename)
+        file.save(file_path)
+        
+        try:
+            image = Image.open(file_path)
+            text = pytesseract.image_to_string(image)
+            dtg = extract_dtg(text)
+            image_url = url_for('static', filename=f'uploads/{filename}')
+            return jsonify({'text': text, 'image': image_url, 'dtg': dtg}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+def extract_dtg(text):
+    word_list = text.split(' ')
+    if 'DTG' not in word_list or 'dtg' not in word_list:
+        return ""
+    
+    for i in range (0, len(word_list)):
+        if word_list[i] == 'DTG' or word_list[i] == 'dtg':
+            return word_list[i+1]
 
 @blueprint.route('/forward_tcs', methods=['POST'])
 def forwardTcs():
@@ -79,8 +122,7 @@ def forwardTcs():
     signal_track = db.session.query(Signal_Tracking).filter_by(signal_id = signal['id']).first()
     signal_track['held_with'] = 'TCS'
     db.session.commit()
-    index()
-    return redirect('/index')
+    return redirect(url_for('home_blueprint.index'))
 
 
 @blueprint.route('/forward_hmo', methods=['POST'])
